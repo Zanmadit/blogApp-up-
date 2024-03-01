@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        #content {
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        #content h1 {
+            color: #333;
+        }
+
+        #content p {
+            color: #666;
+        }
+
+        #content form {
+            margin-top: 20px;
+            width: 40%;
+            margin: 0 auto;
+        }
+
+        #content input[type="text"],
+        #content input[type="email"],
+        #content input[type="password"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        #content input[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        #content input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        #content a {
+            text-decoration: none;
+            text-align: center;
+            color: #007bff;
+            display: block;
+            width: 40%;
+            margin: 0 auto;
+        }
+
+        #content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <%- include('header', { pageTitle: "Register" }) %>
+</head>
+
+<body>
+    <div id="content">
+        <h1>Register</h1>
+
+        <ul>
+            <% if (typeof errors !='undefined' ) { %>
+                <% errors.forEach(error=> { %>
+                    <li>
+                        <%= error.message %>
+                    </li>
+                    <% }) %>
+                        <% } %>
+        </ul>
+
+        <form action="/register" method="POST">
+            <div>
+                <input type="text" id="name" name="name" placeholder="Name" required>
+            </div>
+            <div>
+                <input type="email" id="email" name="email" placeholder="Email" required>
+            </div>
+            <div>
+                <input type="password" id="password" name="password" placeholder="Password" required>
+            </div>
+            <div>
+                <input type="password" id="password1" name="password1" placeholder="Confirm password" required>
+            </div>
+            <div>
+                <input type="submit" value="Register" class="button">
+            </div>
+            <a href="/login">Login</a>
+        </form>
+    </div>
+    <%- include('footer') %>
+</body>
+
+</html>

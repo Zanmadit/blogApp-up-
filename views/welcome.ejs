@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            background-color: black;
+        }
+
+        .carousel-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .carousel-button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .logout-container {
+            position: relative;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <%- include('header', { pageTitle: "Welcome" }) %>
+
+        <div class="container mt-5">
+            <h1>Welcome <%= user.name.charAt(0).toUpperCase() + user.name.slice(1) %>
+            </h1>
+
+            <% if (user.isAdmin) { %>
+                <h2>Create a new Blog</h2>
+                <form id="blogForm">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="titleInput" name="title" placeholder="Title"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-control" id="bodyInput" name="body" placeholder="Body"
+                            required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+
+                <h2>Existing Blogs</h2>
+                <div id="blogCarousel" class="carousel slide" data-ride="carousel">
+                    <div class="carousel-inner">
+                        <% blogs.forEach((blog, index)=> { %>
+                            <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                                <div class="blog-block">
+                                    <h3>
+                                        <%= blog.title %>
+                                    </h3>
+                                    <p id="body_<%= blog._id %>">
+                                        <%= blog.body %>
+                                    </p>
+                                    <p>Author: <%= blog.author %>
+                                    </p>
+                                    <div class="carousel-button-container">
+                                        <button class="btn btn-success update-button"
+                                            data-id="<%= blog._id %>">Update</button>
+                                        <button class="btn btn-danger delete-button"
+                                            data-id="<%= blog._id %>">Delete</button>
+                                        <button class="btn btn-info translate-button" data-id="<%= blog._id %>"
+                                            data-language="ru">Translate</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                    </div>
+                    <a class="carousel-control-prev" href="#blogCarousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="carousel-control-next" href="#blogCarousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+                <% } %>
+        </div>
+        <div class="logout-container">
+            <a href="/logout" class="btn btn-secondary">Logout</a>
+        </div>
+        <%- include('footer') %>
+
+            <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.getElementById('blogForm').addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        createBlog();
+                    });
+
+                async function createBlog() {
+                    const title = document.getElementById('titleInput').value;
+                    const body = document.getElementById('bodyInput').value;
+                    const author = '<%= user._id %>';
+
+                    const data = {
+                        title: title,
+                        body: body,
+                        author: author
+                    };
+
+                    try {
+                        const res = await fetch('/blog', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        const responseData = await res.json();
+                        console.log('New blog created:', responseData);
+                    } catch (error) {
+                        console.error('Error creating blog:', error);
+                    }
+                }
+
+                async function displayBlogs() {
+                    const blogContainer = document.getElementById('blogList');
+
+                    try {
+                        const res = await fetch('/blog');
+                        const blogs = await res.json();
+                        blogContainer.innerHTML = '';
+                        blogs.forEach(blog => {
+                            const blogBlock = document.createElement('div');
+                            blogBlock.classList.add('blog-block');
+
+                            const title = document.createElement('h3');
+                            title.textContent = blog.title;
+                            blogBlock.appendChild(title);
+
+                            const body = document.createElement('p');
+                            body.textContent = blog.body;
+                            body.id = `body_${blog._id}`;
+                            blogBlock.appendChild(body);
+
+                            const author = document.createElement('p');
+                            author.textContent = `Author: ${blog.author}`;
+                            blogBlock.appendChild(author);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.classList.add('delete-button');
+                            deleteButton.setAttribute('data-id', blog._id);
+                            blogBlock.appendChild(deleteButton);
+
+                            const translateButton = document.createElement('button');
+                            translateButton.textContent = 'Translate';
+                            translateButton.classList.add('translate-button');
+                            translateButton.setAttribute('data-id', blog._id);
+                            translateButton.setAttribute('data-language', 'ru');
+                            blogBlock.appendChild(translateButton);
+
+                            blogContainer.appendChild(blogBlock);
+                        });
+                    } catch (error) {
+                        console.error('Error fetching blogs:', error);
+                    }
+                }
+
+                document.addEventListener('click', async function (event) {
+                    if (event.target.classList.contains('update-button')) {
+                        const blogId = event.target.getAttribute('data-id');
+                        try {
+                            await updateBlog(blogId);
+                        } catch (error) {
+                            console.error('Error updating blog:', error);
+                        }
+                    }
+                });
+
+                async function updateBlog(id) {
+                    const newTitle = prompt('Enter new title:');
+                    const newBody = prompt('Enter new body:');
+
+                    if (!newTitle || !newBody) {
+                        console.log('Please provide both title and body for update.');
+                        return;
+                    }
+
+                    const data = {
+                        title: newTitle,
+                        body: newBody
+                    };
+
+                    try {
+                        const res = await fetch(`/blog/${id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        if (res.ok) {
+                            console.log('Blog updated successfully');
+                            displayBlogs();
+                        } else {
+                            console.error('Failed to update blog');
+                        }
+                    } catch (error) {
+                        console.error('Error updating blog:', error);
+                    }
+                }
+
+                document.addEventListener('click', function (event) {
+                    if (event.target.classList.contains('delete-button')) {
+                        const blogId = event.target.getAttribute('data-id');
+                        deleteBlog(blogId);
+                    }
+                });
+
+                async function deleteBlog(id) {
+                    try {
+                        const res = await fetch(`/blog/${id}`, {
+                            method: 'DELETE'
+                        });
+                        if (res.ok) {
+                            console.log('Blog deleted successfully');
+                            displayBlogs();
+                        } else {
+                            console.error('Failed to delete blog');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting blog:', error);
+                    }
+                }
+
+                document.addEventListener('click', async function (event) {
+                    if (event.target.classList.contains('translate-button')) {
+                        const blogId = event.target.getAttribute('data-id');
+                        const blogBodyElement = document.getElementById(`body_${blogId}`);
+                        const text = blogBodyElement.textContent;
+                        try {
+                            const translatedText = await translateText(text);
+                            blogBodyElement.textContent = translatedText;
+                        } catch (error) {
+                            console.error('Error translating text:', error);
+                        }
+                    }
+                });
+
+                async function translateText(text) {
+                    const apiKey = 'AIzaSyCjpbgvUPTwx08U5_caw1jbcsALr4ialoQ';
+                    const targetLanguage = 'ru';
+                    const apiUrl = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+
+                    const data = {
+                        q: text,
+                        target: targetLanguage
+                    };
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to translate text');
+                        }
+
+                        const translatedData = await response.json();
+                        return translatedData.data.translations[0].translatedText;
+                    } catch (error) {
+                        throw error;
+                    }
+                }
+
+                window.onload = async function () {
+                    try {
+                        await displayBlogs();
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
+                };
+            });
+            </script>
+</body>
+
+</html>

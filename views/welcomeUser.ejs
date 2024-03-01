@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            background-color: black;
+        }
+
+        .carousel-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .carousel-button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .logout-container {
+            position: relative;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <% include('header', { pageTitle: "Welcome" }) %>
+
+    <div class="container mt-5">
+        <h1>Welcome <%= user.name.charAt(0).toUpperCase() + user.name.slice(1) %></h1>
+        <h2>Existing Blogs</h2>
+        <div id="blogCarousel" class="carousel slide" data-ride="carousel">
+            <div class="carousel-inner">
+                <% blogs.forEach((blog, index)=> { %>
+                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                    <div class="blog-block">
+                        <h3><%= blog.title %></h3>
+                        <p class="body-text" data-blog-id="<%= blog._id %>"><%= blog.body %></p>
+                        <p>Author: <%= blog.author %></p>
+                        <div class="carousel-button-container">
+                            <button class="btn btn-info translate-button" data-id="<%= blog._id %>"
+                                data-language="ru">Translate</button>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+            <a class="carousel-control-prev" href="#blogCarousel" role="button" data-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#blogCarousel" role="button" data-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="sr-only">Next</span>
+            </a>
+        </div>
+    </div>
+    <div class="logout-container">
+        <a href="/logout" class="btn btn-secondary">Logout</a>
+    </div>
+    <% include('footer') %>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('click', async function (event) {
+            if (event.target.classList.contains('translate-button')) {
+                const blogId = event.target.getAttribute('data-id');
+                const blogBodyElement = document.querySelector(`[data-blog-id="${blogId}"]`);
+                const text = blogBodyElement.textContent;
+                try {
+                    const translatedText = await translateText(text);
+                    blogBodyElement.textContent = translatedText;
+                } catch (error) {
+                    console.error('Error translating text:', error);
+                }
+            }
+        });
+
+        async function translateText(text) {
+            const apiKey = 'AIzaSyCjpbgvUPTwx08U5_caw1jbcsALr4ialoQ';
+            const targetLanguage = 'ru';
+            const apiUrl = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+
+            const data = {
+                q: text,
+                target: targetLanguage
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to translate text');
+                }
+
+                const translatedData = await response.json();
+                return translatedData.data.translations[0].translatedText;
+            } catch (error) {
+                throw error;
+            }
+        }
+    </script>
+</body>
+
+</html>
